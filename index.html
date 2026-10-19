@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSMA Enterprise - SST & Saúde Mental</title>
+    <meta name="description" content="Plataforma integrada de Segurança e Saúde no Trabalho (SST/NRs) com motor de IA e monitoramento de saúde mental (SanderVerse)." />
+    <meta name="theme-color" content="#090d16" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SSMA SST" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:title" content="SSMA Enterprise - SST & Saúde Mental" />
+    <meta property="og:description" content="Plataforma integrada de Segurança e Saúde no Trabalho (SST/NRs) com motor de IA e monitoramento de saúde mental (SanderVerse)." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(reg) {
+              console.log('PWA ServiceWorker registrado com sucesso no escopo:', reg.scope);
+            })
+            .catch(function(err) {
+              console.warn('Falha ao registrar ServiceWorker:', err);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
+
