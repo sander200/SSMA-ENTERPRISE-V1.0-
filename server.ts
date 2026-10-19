@@ -119,87 +119,8 @@ interface EncryptedPsychologicalRecord {
 }
 
 const LGPD_MASTER_KEY = crypto.randomBytes(32);
-const psychologicalStore: EncryptedPsychologicalRecord[] = [
-  // Seed with realistic baseline aggregated data for 6 sectors
-  {
-    id: crypto.randomUUID(),
-    workerHash: crypto.createHash("sha256").update("worker-001").digest("hex").substring(0, 12),
-    encryptedData: "enc_payload_demo_01",
-    iv: crypto.randomBytes(16).toString("hex"),
-    sectorId: 1,
-    sectorName: "Construção Civil",
-    shiftStage: "START",
-    anxietyScore: 2,
-    fatigueScore: 2,
-    decompressionTriggered: false,
-    timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-  {
-    id: crypto.randomUUID(),
-    workerHash: crypto.createHash("sha256").update("worker-002").digest("hex").substring(0, 12),
-    encryptedData: "enc_payload_demo_02",
-    iv: crypto.randomBytes(16).toString("hex"),
-    sectorId: 2,
-    sectorName: "Indústria & Manufatura",
-    shiftStage: "START",
-    anxietyScore: 4,
-    fatigueScore: 4,
-    decompressionTriggered: true,
-    timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
-  },
-  {
-    id: crypto.randomUUID(),
-    workerHash: crypto.createHash("sha256").update("worker-003").digest("hex").substring(0, 12),
-    encryptedData: "enc_payload_demo_03",
-    iv: crypto.randomBytes(16).toString("hex"),
-    sectorId: 3,
-    sectorName: "Serviços de Saúde",
-    shiftStage: "END",
-    anxietyScore: 5,
-    fatigueScore: 4,
-    decompressionTriggered: true,
-    timestamp: new Date(Date.now() - 3600000 * 3).toISOString(),
-  },
-  {
-    id: crypto.randomUUID(),
-    workerHash: crypto.createHash("sha256").update("worker-004").digest("hex").substring(0, 12),
-    encryptedData: "enc_payload_demo_04",
-    iv: crypto.randomBytes(16).toString("hex"),
-    sectorId: 4,
-    sectorName: "Mineração & Espaços Confinados",
-    shiftStage: "START",
-    anxietyScore: 2,
-    fatigueScore: 1,
-    decompressionTriggered: false,
-    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-  {
-    id: crypto.randomUUID(),
-    workerHash: crypto.createHash("sha256").update("worker-005").digest("hex").substring(0, 12),
-    encryptedData: "enc_payload_demo_05",
-    iv: crypto.randomBytes(16).toString("hex"),
-    sectorId: 5,
-    sectorName: "Agronegócio",
-    shiftStage: "START",
-    anxietyScore: 3,
-    fatigueScore: 2,
-    decompressionTriggered: false,
-    timestamp: new Date(Date.now() - 3600000 * 1).toISOString(),
-  },
-  {
-    id: crypto.randomUUID(),
-    workerHash: crypto.createHash("sha256").update("worker-006").digest("hex").substring(0, 12),
-    encryptedData: "enc_payload_demo_06",
-    iv: crypto.randomBytes(16).toString("hex"),
-    sectorId: 6,
-    sectorName: "Ambientes Administrativos",
-    shiftStage: "END",
-    anxietyScore: 4,
-    fatigueScore: 3,
-    decompressionTriggered: true,
-    timestamp: new Date(Date.now() - 1800000).toISOString(),
-  },
-];
+// Empty store for live internal enterprise recording - Zero mock data
+const psychologicalStore: EncryptedPsychologicalRecord[] = [];
 
 // Curated high-fidelity fallback scenarios from technical specification
 const CURATED_SCENARIOS: Record<string, TestScenario[]> = {
@@ -699,7 +620,16 @@ app.get("/api/psychological/anonymized-report", (req, res) => {
       ? psychologicalStore.filter((r) => r.sectorId === sectorFilter)
       : psychologicalStore;
 
-    // Group by sector
+    // Group by sector - pre-initialize all 6 sectors with clean zero state
+    const DEFAULT_SECTORS = [
+      { sectorId: 1, sectorName: "Construção Civil" },
+      { sectorId: 2, sectorName: "Indústria & Manufatura" },
+      { sectorId: 3, sectorName: "Serviços de Saúde" },
+      { sectorId: 4, sectorName: "Mineração & Espaços Confinados" },
+      { sectorId: 5, sectorName: "Agronegócio" },
+      { sectorId: 6, sectorName: "Ambientes Administrativos" },
+    ];
+
     const sectorMap: Record<
       string,
       {
@@ -717,6 +647,20 @@ app.get("/api/psychological/anonymized-report", (req, res) => {
         }>;
       }
     > = {};
+
+    DEFAULT_SECTORS.forEach((sec) => {
+      if (!sectorFilter || sectorFilter === sec.sectorId) {
+        sectorMap[sec.sectorName] = {
+          sectorName: sec.sectorName,
+          sectorId: sec.sectorId,
+          totalLogs: 0,
+          anxietySum: 0,
+          fatigueSum: 0,
+          decompressionCount: 0,
+          anonymizedLogs: [],
+        };
+      }
+    });
 
     filteredRecords.forEach((item) => {
       if (!sectorMap[item.sectorName]) {

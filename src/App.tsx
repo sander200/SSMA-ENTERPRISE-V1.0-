@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navbar, TabType } from "./components/Navbar";
+import { BentoGridMenu } from "./components/BentoGridMenu";
+import { SplashScreen } from "./components/SplashScreen";
 import { SectorGrid } from "./components/SectorGrid";
 import { ScenarioPlayer } from "./components/ScenarioPlayer";
 import { CheckInView } from "./components/CheckInView";
@@ -7,23 +9,29 @@ import { DecompressionModule } from "./components/DecompressionModule";
 import { AIGeneratorView } from "./components/AIGeneratorView";
 import { SESMTDashboard } from "./components/SESMTDashboard";
 import { LGPDConsentModal } from "./components/LGPDConsentModal";
-import { APKInstallModal } from "./components/APKInstallModal";
 import { PasswordPromptModal } from "./components/PasswordPromptModal";
 import { SettingsView } from "./components/SettingsView";
 import { ECONOMIC_SECTORS, INITIAL_SCENARIOS } from "./data/sectors";
 import { TestScenario, PsychologicalLog, TrainingAttempt } from "./types";
-import { Trophy, CheckCircle, Flame, Shield, ArrowUpRight, Smartphone } from "lucide-react";
+import { Trophy, CheckCircle, Flame, Shield, ArrowUpRight, ArrowLeft } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext";
 import { motion, AnimatePresence } from "motion/react";
 
 function AppContent() {
-  const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<TabType>("training");
+  const { t, language } = useLanguage();
+
+  // Splash Screen State
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    // Show splash on every reload for professional first-entry experience
+    return true;
+  });
+
+  // Tab State - Starts on Bento Grid Menu
+  const [activeTab, setActiveTab] = useState<TabType>("menu");
   const [selectedSectorId, setSelectedSectorId] = useState<number>(1);
   const [currentScenario, setCurrentScenario] = useState<TestScenario>(INITIAL_SCENARIOS[0]);
   const [isGeneratingAI, setIsGeneratingAI] = useState<boolean>(false);
   const [showLGPDModal, setShowLGPDModal] = useState<boolean>(false);
-  const [showAPKModal, setShowAPKModal] = useState<boolean>(false);
 
   // Settings & Password State
   const [settingsPassword, setSettingsPassword] = useState<string>(() => {
@@ -40,7 +48,7 @@ function AppContent() {
     return localStorage.getItem("ssma_motion_enabled") !== "false";
   });
 
-  // User Psychological Profile State
+  // User Psychological Profile State - Zero mock start for live enterprise recording
   const [userLog, setUserLog] = useState<PsychologicalLog | null>(() => {
     const saved = localStorage.getItem("ssma_psychological_log");
     if (saved) {
@@ -50,19 +58,10 @@ function AppContent() {
         console.warn("Could not parse saved psychological log", e);
       }
     }
-    return {
-      userId: "operador-local-01",
-      workerHash: "7b4c91a03f8e",
-      shiftStage: "START",
-      anxietyScore: 3,
-      fatigueScore: 2,
-      totalMentalLoad: 5,
-      decompressionTriggered: false,
-      loggedAt: new Date().toISOString(),
-    };
+    return null;
   });
 
-  // Training Performance History State
+  // Training Performance History State - Zero mock start
   const [attempts, setAttempts] = useState<TrainingAttempt[]>(() => {
     const saved = localStorage.getItem("ssma_training_attempts");
     if (saved) {
@@ -199,7 +198,7 @@ function AppContent() {
 
   function handleLockSessionNow() {
     setIsSettingsUnlocked(false);
-    setActiveTab("training");
+    setActiveTab("menu");
   }
 
   function handleToggleMotion(enabled: boolean) {
@@ -229,12 +228,14 @@ function AppContent() {
     : {};
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-white">
+      {/* Splash Screen on Entry */}
+      <AnimatePresence>
+        {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+      </AnimatePresence>
+
       {/* LGPD Consent Modal */}
       <LGPDConsentModal isOpen={showLGPDModal} onAccept={handleAcceptLGPD} />
-
-      {/* APK & Mobile Installation Modal */}
-      <APKInstallModal isOpen={showAPKModal} onClose={() => setShowAPKModal(false)} />
 
       {/* Settings Password Prompt Modal */}
       <PasswordPromptModal
@@ -253,7 +254,6 @@ function AppContent() {
         setSelectedSectorId={handleSelectSector}
         userLog={userLog}
         onOpenLGPDModal={() => setShowLGPDModal(true)}
-        onOpenAPKModal={() => setShowAPKModal(true)}
         isSettingsPasswordProtected={isPasswordRequired}
         isSettingsUnlocked={isSettingsUnlocked}
         onSelectSettingsTab={handleSelectSettingsTab}
@@ -263,12 +263,50 @@ function AppContent() {
       {/* Content Area with Dynamic Animated Transitions */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <AnimatePresence mode="wait">
+          {/* VIEW 0: BENTO GRID MENU (MAIN MENU) */}
+          {activeTab === "menu" && (
+            <motion.div
+              key="tab-menu-content"
+              {...tabMotionProps}
+            >
+              <BentoGridMenu
+                onSelectModule={(module) => setActiveTab(module)}
+                userLog={userLog}
+                totalAttempts={totalAttempts}
+                accuracy={accuracy}
+                currentSectorName={activeSector.name}
+              />
+            </motion.div>
+          )}
+
+          {/* VIEW 1: TRAINING / SIMULATOR */}
           {activeTab === "training" && (
             <motion.div
               key="tab-training-content"
               {...tabMotionProps}
-              className="space-y-8"
+              className="space-y-6"
             >
+              {/* Return to Bento Menu header link */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("menu")}
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <span>
+                    {language === "es"
+                      ? "Volver al Menú Principal"
+                      : language === "en"
+                      ? "Back to Main Menu"
+                      : "Voltar ao Menu Principal"}
+                  </span>
+                </button>
+                <span className="text-xs text-slate-400">
+                  Simulação em Tempo Real • Time-Attack
+                </span>
+              </div>
+
               {/* Sector Selector Cards */}
               <SectorGrid
                 selectedSectorId={selectedSectorId}
@@ -276,9 +314,9 @@ function AppContent() {
               />
 
               {/* Performance Strip */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-800/80 p-4 rounded-2xl border border-slate-700/70 shadow-md">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
                     <Trophy className="w-4 h-4" />
                   </div>
                   <div>
@@ -290,7 +328,7 @@ function AppContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
                     <CheckCircle className="w-4 h-4" />
                   </div>
                   <div>
@@ -302,7 +340,7 @@ function AppContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                     <Flame className="w-4 h-4" />
                   </div>
                   <div>
@@ -320,7 +358,7 @@ function AppContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
                     <Shield className="w-4 h-4" />
                   </div>
                   <div>
@@ -346,11 +384,30 @@ function AppContent() {
             </motion.div>
           )}
 
+          {/* VIEW 2: CHECK-IN EMOCIONAL */}
           {activeTab === "checkin" && (
             <motion.div
               key="tab-checkin-content"
               {...tabMotionProps}
+              className="space-y-4"
             >
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("menu")}
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <span>
+                    {language === "es"
+                      ? "Volver al Menú Principal"
+                      : language === "en"
+                      ? "Back to Main Menu"
+                      : "Voltar ao Menu Principal"}
+                  </span>
+                </button>
+              </div>
+
               <CheckInView
                 onCheckInCompleted={handleCheckInCompleted}
                 currentSector={activeSector.name}
@@ -359,21 +416,58 @@ function AppContent() {
             </motion.div>
           )}
 
+          {/* VIEW 3: DECOMPRESSÃO */}
           {activeTab === "decompression" && (
             <motion.div
               key="tab-decompression-content"
               {...tabMotionProps}
-              className="max-w-4xl mx-auto"
+              className="max-w-4xl mx-auto space-y-4"
             >
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("menu")}
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <span>
+                    {language === "es"
+                      ? "Volver al Menú Principal"
+                      : language === "en"
+                      ? "Back to Main Menu"
+                      : "Voltar ao Menu Principal"}
+                  </span>
+                </button>
+              </div>
+
               <DecompressionModule onFinish={() => setActiveTab("training")} />
             </motion.div>
           )}
 
+          {/* VIEW 4: GERADOR IA */}
           {activeTab === "generator" && (
             <motion.div
               key="tab-generator-content"
               {...tabMotionProps}
+              className="space-y-4"
             >
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("menu")}
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <span>
+                    {language === "es"
+                      ? "Volver al Menú Principal"
+                      : language === "en"
+                      ? "Back to Main Menu"
+                      : "Voltar ao Menu Principal"}
+                  </span>
+                </button>
+              </div>
+
               <AIGeneratorView
                 onLoadScenarioToPlay={handlePlayGeneratedScenario}
                 initialSectorName={activeSector.name}
@@ -381,20 +475,58 @@ function AppContent() {
             </motion.div>
           )}
 
+          {/* VIEW 5: PAINEL SESMT & LGPD */}
           {activeTab === "sesmt" && (
             <motion.div
               key="tab-sesmt-content"
               {...tabMotionProps}
+              className="space-y-4"
             >
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("menu")}
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <span>
+                    {language === "es"
+                      ? "Volver al Menú Principal"
+                      : language === "en"
+                      ? "Back to Main Menu"
+                      : "Voltar ao Menu Principal"}
+                  </span>
+                </button>
+              </div>
+
               <SESMTDashboard />
             </motion.div>
           )}
 
+          {/* VIEW 6: CONFIGURAÇÕES */}
           {activeTab === "settings" && (
             <motion.div
               key="tab-settings-content"
               {...tabMotionProps}
+              className="space-y-4"
             >
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("menu")}
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <span>
+                    {language === "es"
+                      ? "Volver al Menú Principal"
+                      : language === "en"
+                      ? "Back to Main Menu"
+                      : "Voltar ao Menu Principal"}
+                  </span>
+                </button>
+              </div>
+
               <SettingsView
                 currentPassword={settingsPassword}
                 onUpdatePassword={handleUpdatePassword}
@@ -412,10 +544,10 @@ function AppContent() {
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 text-slate-500 text-xs text-center space-y-2">
+      {/* Footer - Visible APK download button removed */}
+      <footer className="border-t border-slate-800/80 bg-slate-900/90 py-6 text-slate-400 text-xs text-center space-y-2">
         <div className="flex flex-wrap justify-center items-center gap-4">
-          <span className="text-slate-400 font-semibold">{t("footerRights")}</span>
+          <span className="text-slate-300 font-semibold">{t("footerRights")}</span>
           <span>•</span>
           <span>{t("footerNorms")}</span>
           <span>•</span>
@@ -427,17 +559,8 @@ function AppContent() {
             {t("footerLgpd")}
             <ArrowUpRight className="w-3 h-3" />
           </button>
-          <span>•</span>
-          <button
-            type="button"
-            onClick={() => setShowAPKModal(true)}
-            className="text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer font-medium"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            {t("footerApk")}
-          </button>
         </div>
-        <p className="text-[11px] text-slate-600 max-w-2xl mx-auto px-4">
+        <p className="text-[11px] text-slate-400 max-w-2xl mx-auto px-4">
           {t("footerDisclaimer")}
         </p>
       </footer>
