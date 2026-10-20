@@ -11,31 +11,88 @@ import { SESMTDashboard } from "./components/SESMTDashboard";
 import { LGPDConsentModal } from "./components/LGPDConsentModal";
 import { PasswordPromptModal } from "./components/PasswordPromptModal";
 import { SettingsView } from "./components/SettingsView";
+import { LicenseExpirationModal } from "./components/LicenseExpirationModal";
 import { ECONOMIC_SECTORS, INITIAL_SCENARIOS } from "./data/sectors";
 import { USER_BADGES } from "./data/badges";
-import { TestScenario, PsychologicalLog, TrainingAttempt, UserBadge } from "./types";
-import { Trophy, CheckCircle, Flame, Shield, ArrowUpRight, ArrowLeft } from "lucide-react";
+import {
+  TestScenario,
+  PsychologicalLog,
+  TrainingAttempt,
+  UserBadge,
+} from "./types";
+import {
+  Trophy,
+  CheckCircle,
+  Flame,
+  Shield,
+  ArrowUpRight,
+  ArrowLeft,
+} from "lucide-react";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext";
 import { motion, AnimatePresence } from "motion/react";
 import { useNotificationReminder } from "./hooks/useNotificationReminder";
+import { useThemeMode } from "./hooks/useThemeMode";
 import { NotificationReminderToast } from "./components/NotificationReminderToast";
 import { BadgeUnlockModal } from "./components/BadgeUnlockModal";
+import { isExactExpirationDay } from "./services/googleWorkspace";
 
 function AppContent() {
   const { t, language } = useLanguage();
+  const {
+    themePreference,
+    resolvedTheme,
+    systemTheme,
+    setThemePreference,
+  } = useThemeMode();
 
   // Splash Screen State
-  const [showSplash, setShowSplash] = useState<boolean>(() => {
-    // Show splash on every reload for professional first-entry experience
-    return true;
-  });
+  const [showSplash, setShowSplash] = useState<boolean>(true);
 
   // Tab State - Starts on Bento Grid Menu
   const [activeTab, setActiveTab] = useState<TabType>("menu");
+  const [settingsInitialSubTab, setSettingsInitialSubTab] = useState<
+    "general" | "developer"
+  >("general");
   const [selectedSectorId, setSelectedSectorId] = useState<number>(1);
-  const [currentScenario, setCurrentScenario] = useState<TestScenario>(INITIAL_SCENARIOS[0]);
+  const [currentScenario, setCurrentScenario] = useState<TestScenario>(
+    INITIAL_SCENARIOS[0]
+  );
   const [isGeneratingAI, setIsGeneratingAI] = useState<boolean>(false);
   const [showLGPDModal, setShowLGPDModal] = useState<boolean>(false);
+
+  // Corporate Custom Logo State (Managed in Developer Tab)
+  const [customLogo, setCustomLogo] = useState<string | null>(() => {
+    return localStorage.getItem("ssma_custom_logo") || null;
+  });
+
+  // License & Dynamic Key State (Synced with Google Sheets in Developer Tab)
+  const [licenseKey, setLicenseKey] = useState<string>(() => {
+    return (
+      localStorage.getItem("ssma_enterprise_license_key") ||
+      "SSMA-CORP-94713-ENT-2026-VAL"
+    );
+  });
+  const [dynamicKey, setDynamicKey] = useState<string>(() => {
+    return (
+      localStorage.getItem("ssma_dynamic_exchange_key") || "DYN-7K9P-4M2X-2026"
+    );
+  });
+  const [licenseExpirationDate, setLicenseExpirationDate] = useState<string>(
+    () => {
+      return localStorage.getItem("ssma_license_expiration_date") || "2026-12-31";
+    }
+  );
+  const [showExpirationModal, setShowExpirationModal] =
+    useState<boolean>(false);
+
+  // Check if today is the exact expiration day of the license
+  useEffect(() => {
+    if (isExactExpirationDay(licenseExpirationDate)) {
+      setShowExpirationModal(true);
+    } else {
+      setShowExpirationModal(false);
+    }
+  }, [licenseExpirationDate]);
 
   // Settings & Password State (Strict Master Key: keysander5361)
   const [settingsPassword, setSettingsPassword] = useState<string>(() => {
@@ -58,14 +115,15 @@ function AppContent() {
   });
 
   // Badge Unlock Celebration State
-  const [unlockedBadgeCelebration, setUnlockedBadgeCelebration] = useState<UserBadge | null>(null);
+  const [unlockedBadgeCelebration, setUnlockedBadgeCelebration] =
+    useState<UserBadge | null>(null);
 
   // Web Notification Daily Reminder Hook
   const reminder = useNotificationReminder({
     onNavigateToCheckIn: () => setActiveTab("checkin"),
   });
 
-  // User Psychological Profile State - Zero mock start for live enterprise recording
+  // User Psychological Profile State (Latest + History for Administrative Reporting)
   const [userLog, setUserLog] = useState<PsychologicalLog | null>(() => {
     const saved = localStorage.getItem("ssma_psychological_log");
     if (saved) {
@@ -78,7 +136,32 @@ function AppContent() {
     return null;
   });
 
-  // Training Performance History State - Zero mock start
+  const [psychologicalLogs, setPsychologicalLogs] = useState<PsychologicalLog[]>(
+    () => {
+      const savedHistory = localStorage.getItem(
+        "ssma_psychological_logs_history"
+      );
+      if (savedHistory) {
+        try {
+          const parsed = JSON.parse(savedHistory);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+          console.warn("Could not parse saved psychological logs history", e);
+        }
+      }
+      const single = localStorage.getItem("ssma_psychological_log");
+      if (single) {
+        try {
+          return [JSON.parse(single)];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    }
+  );
+
+  // Training Performance History State
   const [attempts, setAttempts] = useState<TrainingAttempt[]>(() => {
     const saved = localStorage.getItem("ssma_training_attempts");
     if (saved) {
@@ -104,14 +187,83 @@ function AppContent() {
     setShowLGPDModal(false);
   }
 
+  function handleUpdateCustomLogo(logoDataUrl: string | null) {
+    setCustomLogo(logoDataUrl);
+    if (logoDataUrl) {
+      localStorage.setItem("ssma_custom_logo", logoDataUrl);
+    } else {
+      localStorage.removeItem("ssma_custom_logo");
+    }
+  }
+
+  function handleUpdateLicenseExpirationDate(dateStr: string) {
+    setLicenseExpirationDate(dateStr);
+    localStorage.setItem("ssma_license_expiration_date", dateStr);
+  }
+
+  function handleUpdateLicenseKey(key: string) {
+    setLicenseKey(key);
+    localStorage.setItem("ssma_enterprise_license_key", key);
+  }
+
+  function handleUpdateDynamicKey(key: string) {
+    setDynamicKey(key);
+    localStorage.setItem("ssma_dynamic_exchange_key", key);
+  }
+
+  function handleRestoreLocalData(data: {
+    attempts?: TrainingAttempt[];
+    userLog?: PsychologicalLog | null;
+    psychologicalLogs?: PsychologicalLog[];
+  }) {
+    if (data.attempts !== undefined) {
+      setAttempts(data.attempts);
+      localStorage.setItem(
+        "ssma_training_attempts",
+        JSON.stringify(data.attempts.slice(0, 50))
+      );
+    }
+    if (data.userLog !== undefined) {
+      setUserLog(data.userLog);
+      if (data.userLog) {
+        localStorage.setItem(
+          "ssma_psychological_log",
+          JSON.stringify(data.userLog)
+        );
+      } else {
+        localStorage.removeItem("ssma_psychological_log");
+      }
+    }
+    if (data.psychologicalLogs !== undefined) {
+      setPsychologicalLogs(data.psychologicalLogs);
+      localStorage.setItem(
+        "ssma_psychological_logs_history",
+        JSON.stringify(data.psychologicalLogs.slice(0, 100))
+      );
+    } else if (data.userLog) {
+      setPsychologicalLogs((prev) => {
+        const updated = [data.userLog!, ...prev].slice(0, 100);
+        localStorage.setItem(
+          "ssma_psychological_logs_history",
+          JSON.stringify(updated)
+        );
+        return updated;
+      });
+    } else if (data.userLog === null) {
+      setPsychologicalLogs([]);
+      localStorage.removeItem("ssma_psychological_logs_history");
+    }
+  }
+
   // Update current scenario when sector changes
   function handleSelectSector(sectorId: number) {
     setSelectedSectorId(sectorId);
     const targetSector = ECONOMIC_SECTORS.find((s) => s.id === sectorId);
     if (!targetSector) return;
 
-    // Find initial scenario for this sector
-    const found = INITIAL_SCENARIOS.find((sc) => sc.sector === targetSector.name);
+    const found = INITIAL_SCENARIOS.find(
+      (sc) => sc.sector === targetSector.name
+    );
     if (found) {
       setCurrentScenario(found);
     }
@@ -120,7 +272,9 @@ function AppContent() {
   // Next Scenario: query backend AI generator or next from curated
   async function handleNextScenario() {
     setIsGeneratingAI(true);
-    const targetSector = ECONOMIC_SECTORS.find((s) => s.id === selectedSectorId);
+    const targetSector = ECONOMIC_SECTORS.find(
+      (s) => s.id === selectedSectorId
+    );
     const sectorName = targetSector ? targetSector.name : "Construção Civil";
 
     try {
@@ -141,14 +295,19 @@ function AppContent() {
         }
       }
     } catch (e) {
-      console.warn("Failed to generate dynamic AI scenario, picking from curated pool", e);
+      console.warn(
+        "Failed to generate dynamic AI scenario, picking from curated pool",
+        e
+      );
     } finally {
       setIsGeneratingAI(false);
     }
 
-    // Curated fallback
-    const sectorScenarios = INITIAL_SCENARIOS.filter((s) => s.sector === sectorName);
-    const nextOne = sectorScenarios[Math.floor(Math.random() * sectorScenarios.length)];
+    const sectorScenarios = INITIAL_SCENARIOS.filter(
+      (s) => s.sector === sectorName
+    );
+    const nextOne =
+      sectorScenarios[Math.floor(Math.random() * sectorScenarios.length)];
     if (nextOne) {
       setCurrentScenario(nextOne);
     }
@@ -157,8 +316,15 @@ function AppContent() {
   function handleCheckInCompleted(log: PsychologicalLog) {
     setUserLog(log);
     localStorage.setItem("ssma_psychological_log", JSON.stringify(log));
+    setPsychologicalLogs((prev) => {
+      const updated = [log, ...prev].slice(0, 100);
+      localStorage.setItem(
+        "ssma_psychological_logs_history",
+        JSON.stringify(updated)
+      );
+      return updated;
+    });
 
-    // If load is high, offer decompression
     if (log.totalMentalLoad >= 7) {
       setActiveTab("decompression");
     } else {
@@ -169,9 +335,11 @@ function AppContent() {
   function handleAttemptCompleted(attempt: TrainingAttempt) {
     setAttempts((prev) => {
       const updated = [attempt, ...prev];
-      localStorage.setItem("ssma_training_attempts", JSON.stringify(updated.slice(0, 50)));
+      localStorage.setItem(
+        "ssma_training_attempts",
+        JSON.stringify(updated.slice(0, 50))
+      );
 
-      // Detect if user unlocked a new tier milestone (1, 3, 5, 10, 20)
       const newlyUnlocked = USER_BADGES.find(
         (b) => b.requiredScenarios === updated.length
       );
@@ -193,7 +361,8 @@ function AppContent() {
   }
 
   // Settings Tab Access Control
-  function handleSelectSettingsTab() {
+  function handleSelectSettingsTab(subTab: "general" | "developer" = "general") {
+    setSettingsInitialSubTab(subTab);
     if (!isPasswordRequired || isSettingsUnlocked) {
       setActiveTab("settings");
     } else {
@@ -240,24 +409,34 @@ function AppContent() {
   // Calculate high-level training stats
   const totalAttempts = attempts.length;
   const correctCount = attempts.filter((a) => a.isCorrect).length;
-  const accuracy = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 100;
+  const accuracy =
+    totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 100;
   const activeSector =
-    ECONOMIC_SECTORS.find((s) => s.id === selectedSectorId) || ECONOMIC_SECTORS[0];
+    ECONOMIC_SECTORS.find((s) => s.id === selectedSectorId) ||
+    ECONOMIC_SECTORS[0];
 
   const tabMotionProps = motionEnabled
     ? {
         initial: { opacity: 0, y: 12, scale: 0.995 },
         animate: { opacity: 1, y: 0, scale: 1 },
         exit: { opacity: 0, y: -10, scale: 0.995 },
-        transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+        transition: {
+          duration: 0.22,
+          ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+        },
       }
     : {};
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-white">
-      {/* Splash Screen on Entry */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-teal-600 selection:text-white transition-colors duration-200">
+      {/* Splash Screen on Entry with Centered Corporate Logo */}
       <AnimatePresence>
-        {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+        {showSplash && (
+          <SplashScreen
+            onFinish={() => setShowSplash(false)}
+            customLogo={customLogo}
+          />
+        )}
       </AnimatePresence>
 
       {/* LGPD Consent Modal */}
@@ -272,6 +451,20 @@ function AppContent() {
         onResetToDefault={handleResetPasswordToDefault}
       />
 
+      {/* Exact-Day License Expiration Alert Modal */}
+      <LicenseExpirationModal
+        isOpen={showExpirationModal}
+        onClose={() => setShowExpirationModal(false)}
+        onOpenDeveloperLicenseTab={() => handleSelectSettingsTab("developer")}
+        expirationDate={licenseExpirationDate}
+        licenseKey={licenseKey}
+        dynamicKey={dynamicKey}
+        developerEmail={
+          localStorage.getItem("ssma_developer_contact") ||
+          "beisander2@gmail.com"
+        }
+      />
+
       {/* Badge Unlock Celebration Modal */}
       <BadgeUnlockModal
         badge={unlockedBadgeCelebration}
@@ -282,7 +475,7 @@ function AppContent() {
         }}
       />
 
-      {/* Main Navbar */}
+      {/* Simplified Clean Header / Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -292,8 +485,9 @@ function AppContent() {
         onOpenLGPDModal={() => setShowLGPDModal(true)}
         isSettingsPasswordProtected={isPasswordRequired}
         isSettingsUnlocked={isSettingsUnlocked}
-        onSelectSettingsTab={handleSelectSettingsTab}
+        onSelectSettingsTab={() => handleSelectSettingsTab("general")}
         motionEnabled={motionEnabled}
+        customLogo={customLogo}
       />
 
       {/* Web Notification In-App Toast Banner */}
@@ -308,10 +502,7 @@ function AppContent() {
         <AnimatePresence mode="wait">
           {/* VIEW 0: BENTO GRID MENU (MAIN MENU) */}
           {activeTab === "menu" && (
-            <motion.div
-              key="tab-menu-content"
-              {...tabMotionProps}
-            >
+            <motion.div key="tab-menu-content" {...tabMotionProps}>
               <BentoGridMenu
                 onSelectModule={(module) => setActiveTab(module)}
                 userLog={userLog}
@@ -329,14 +520,13 @@ function AppContent() {
               {...tabMotionProps}
               className="space-y-6"
             >
-              {/* Return to Bento Menu header link */}
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setActiveTab("menu")}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-teal-700 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-600" />
                   <span>
                     {language === "es"
                       ? "Volver al Menú Principal"
@@ -345,52 +535,55 @@ function AppContent() {
                       : "Voltar ao Menu Principal"}
                   </span>
                 </button>
-                <span className="text-xs text-slate-400">
-                  Simulação em Tempo Real • Time-Attack
+                <span className="text-xs text-slate-500 font-semibold">
+                  Simulador SST • Time-Attack
                 </span>
               </div>
 
-              {/* Sector Selector Cards */}
               <SectorGrid
                 selectedSectorId={selectedSectorId}
                 onSelectSector={(s) => handleSelectSector(s.id)}
               />
 
               {/* Performance Strip */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-800/80 p-4 rounded-2xl border border-slate-700/70 shadow-md">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 shrink-0">
                     <Trophy className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       {t("statNormativeAccuracy")}
                     </span>
-                    <span className="text-base font-bold text-white">{accuracy}%</span>
+                    <span className="text-base font-extrabold text-slate-900">
+                      {accuracy}%
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0">
                     <CheckCircle className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       {t("statEvaluatedScenarios")}
                     </span>
-                    <span className="text-base font-bold text-white">{totalAttempts}</span>
+                    <span className="text-base font-extrabold text-slate-900">
+                      {totalAttempts}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
                     <Flame className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       {t("statActiveTimeAttack")}
                     </span>
-                    <span className="text-base font-bold text-amber-300">
+                    <span className="text-base font-extrabold text-amber-800">
                       {userLog && userLog.totalMentalLoad >= 7
                         ? t("statLoadHigh")
                         : userLog && userLog.totalMentalLoad <= 4
@@ -401,21 +594,20 @@ function AppContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
                     <Shield className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       {t("statCurrentSector")}
                     </span>
-                    <span className="text-xs font-bold text-slate-200 truncate max-w-[130px] block">
+                    <span className="text-xs font-extrabold text-slate-900 truncate max-w-[130px] block">
                       {activeSector.name}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Scenario Player Component */}
               <ScenarioPlayer
                 scenario={currentScenario}
                 userLog={userLog}
@@ -438,9 +630,9 @@ function AppContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("menu")}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-teal-700 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-600" />
                   <span>
                     {language === "es"
                       ? "Volver al Menú Principal"
@@ -456,7 +648,9 @@ function AppContent() {
                 currentSector={activeSector.name}
                 currentSectorId={activeSector.id}
                 reminderConfig={reminder.config}
-                onOpenReminderSettings={() => setActiveTab("settings")}
+                onOpenReminderSettings={() =>
+                  handleSelectSettingsTab("general")
+                }
                 onSendTestNotification={reminder.sendTestNotification}
               />
             </motion.div>
@@ -473,9 +667,9 @@ function AppContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("menu")}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-teal-700 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-600" />
                   <span>
                     {language === "es"
                       ? "Volver al Menú Principal"
@@ -501,9 +695,9 @@ function AppContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("menu")}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-teal-700 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-600" />
                   <span>
                     {language === "es"
                       ? "Volver al Menú Principal"
@@ -532,9 +726,9 @@ function AppContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("menu")}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-teal-700 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-600" />
                   <span>
                     {language === "es"
                       ? "Volver al Menú Principal"
@@ -545,11 +739,14 @@ function AppContent() {
                 </button>
               </div>
 
-              <SESMTDashboard />
+              <SESMTDashboard
+                attempts={attempts}
+                psychologicalLogs={psychologicalLogs}
+              />
             </motion.div>
           )}
 
-          {/* VIEW 6: CONFIGURAÇÕES */}
+          {/* VIEW 6: CONFIGURAÇÕES & MODO DESARROLLADOR */}
           {activeTab === "settings" && (
             <motion.div
               key="tab-settings-content"
@@ -560,9 +757,9 @@ function AppContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("menu")}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-teal-300 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 border border-slate-700/60"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-teal-700 transition-colors cursor-pointer px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 text-teal-400" />
+                  <ArrowLeft className="w-3.5 h-3.5 text-teal-600" />
                   <span>
                     {language === "es"
                       ? "Volver al Menú Principal"
@@ -584,6 +781,25 @@ function AppContent() {
                 onToggleMotion={handleToggleMotion}
                 onClearHistory={handleClearHistory}
                 totalAttempts={totalAttempts}
+                attempts={attempts}
+                userLog={userLog}
+                onRestoreLocalData={handleRestoreLocalData}
+                customLogo={customLogo}
+                onUpdateCustomLogo={handleUpdateCustomLogo}
+                licenseExpirationDate={licenseExpirationDate}
+                onUpdateLicenseExpirationDate={
+                  handleUpdateLicenseExpirationDate
+                }
+                licenseKey={licenseKey}
+                onUpdateLicenseKey={handleUpdateLicenseKey}
+                dynamicKey={dynamicKey}
+                onUpdateDynamicKey={handleUpdateDynamicKey}
+                onTriggerExpirationPopupNow={() => setShowExpirationModal(true)}
+                initialSubTab={settingsInitialSubTab}
+                themePreference={themePreference}
+                resolvedTheme={resolvedTheme}
+                systemTheme={systemTheme}
+                onChangeThemePreference={setThemePreference}
                 notificationReminder={reminder}
               />
             </motion.div>
@@ -591,23 +807,23 @@ function AppContent() {
         </AnimatePresence>
       </main>
 
-      {/* Footer - Visible APK download button removed */}
-      <footer className="border-t border-slate-800/80 bg-slate-900/90 py-6 text-slate-400 text-xs text-center space-y-2">
+      {/* Clean Corporate Footer */}
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-slate-600 dark:text-slate-400 text-xs text-center space-y-2 transition-colors">
         <div className="flex flex-wrap justify-center items-center gap-4">
-          <span className="text-slate-300 font-semibold">{t("footerRights")}</span>
+          <span className="text-slate-800 font-bold">{t("footerRights")}</span>
           <span>•</span>
           <span>{t("footerNorms")}</span>
           <span>•</span>
           <button
             type="button"
             onClick={() => setShowLGPDModal(true)}
-            className="text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+            className="text-teal-700 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
           >
             {t("footerLgpd")}
             <ArrowUpRight className="w-3 h-3" />
           </button>
         </div>
-        <p className="text-[11px] text-slate-400 max-w-2xl mx-auto px-4">
+        <p className="text-[11px] text-slate-500 max-w-2xl mx-auto px-4">
           {t("footerDisclaimer")}
         </p>
       </footer>

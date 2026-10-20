@@ -1,5 +1,30 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root,
+html.light {
+  --ssma-bg-primary: #f8fafc;
+  --ssma-bg-surface: #ffffff;
+  --ssma-bg-elevated: #f1f5f9;
+  --ssma-text-primary: #0f172a;
+  --ssma-text-secondary: #334155;
+  --ssma-text-muted: #475569;
+  --ssma-border: #e2e8f0;
+  color-scheme: light;
+}
+
+html.dark {
+  --ssma-bg-primary: #0f172a;
+  --ssma-bg-surface: #1e293b;
+  --ssma-bg-elevated: #0f172a;
+  --ssma-text-primary: #f8fafc;
+  --ssma-text-secondary: #e2e8f0;
+  --ssma-text-muted: #94a3b8;
+  --ssma-border: #334155;
+  color-scheme: dark;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -13,4 +38,300 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Base Document Colors Driven by Theme Variables */
+html,
+body {
+  background-color: var(--ssma-bg-primary);
+  color: var(--ssma-text-primary);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ============================================================================
+   MODO CLARO (FORZADO O AUTOMÁTICO CLARO): #f8fafc / #ffffff
+   ============================================================================ */
+html:not(.dark) .bg-slate-950,
+html:not(.dark) .bg-slate-950\/80,
+html:not(.dark) .bg-slate-950\/70 {
+  background-color: #f8fafc !important;
+  color: #0f172a;
+}
+
+html:not(.dark) .bg-slate-900,
+html:not(.dark) .bg-slate-900\/95,
+html:not(.dark) .bg-slate-900\/90,
+html:not(.dark) .bg-slate-900\/80,
+html:not(.dark) .bg-slate-900\/70,
+html:not(.dark) .bg-slate-900\/60 {
+  background-color: #ffffff !important;
+  color: #0f172a;
+}
+
+html:not(.dark) .bg-slate-850,
+html:not(.dark) .bg-slate-800,
+html:not(.dark) .bg-slate-800\/95,
+html:not(.dark) .bg-slate-800\/90,
+html:not(.dark) .bg-slate-800\/85,
+html:not(.dark) .bg-slate-800\/80,
+html:not(.dark) .bg-slate-800\/60 {
+  background-color: #ffffff !important;
+  color: #0f172a;
+}
+
+html:not(.dark) .border-slate-800,
+html:not(.dark) .border-slate-800\/80,
+html:not(.dark) .border-slate-750,
+html:not(.dark) .border-slate-700,
+html:not(.dark) .border-slate-700\/80,
+html:not(.dark) .border-slate-700\/70,
+html:not(.dark) .border-slate-700\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .text-slate-100,
+html:not(.dark) .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .text-slate-300 {
+  color: #334155 !important;
+}
+
+html:not(.dark) .text-slate-400 {
+  color: #475569 !important;
+}
+
+html:not(.dark)
+  .text-white:not([class*="bg-teal-"]):not([class*="bg-emerald-"]):not(
+    [class*="bg-amber-"]
+  ):not([class*="bg-rose-"]):not([class*="bg-blue-"]):not(
+    [class*="bg-indigo-"]
+  ):not([class*="bg-purple-"]):not([class*="from-teal-"]):not(
+    [class*="from-emerald-"]
+  ):not([class*="from-amber-"]):not([class*="from-blue-"]):not(
+    [class*="from-indigo-"]
+  ) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-teal-300,
+html:not(.dark) .text-teal-400 {
+  color: #0f766e !important;
+}
+
+html:not(.dark) .text-emerald-300,
+html:not(.dark) .text-emerald-400 {
+  color: #047857 !important;
+}
+
+html:not(.dark) .text-amber-200,
+html:not(.dark) .text-amber-300,
+html:not(.dark) .text-amber-400 {
+  color: #b45309 !important;
+}
+
+html:not(.dark) .text-rose-200,
+html:not(.dark) .text-rose-300,
+html:not(.dark) .text-rose-400 {
+  color: #be123c !important;
+}
+
+html:not(.dark) .text-blue-300,
+html:not(.dark) .text-blue-400,
+html:not(.dark) .text-cyan-300,
+html:not(.dark) .text-cyan-400 {
+  color: #0369a1 !important;
+}
+
+html:not(.dark) .text-purple-300,
+html:not(.dark) .text-purple-400 {
+  color: #6d28d9 !important;
+}
+
+/* ============================================================================
+   MODO OSCURO CORPORATIVO: #0f172a (Fondo) / #1e293b (Superficies y Tarjetas)
+   Alto contraste para normativas SST y métricas de carga mental
+   ============================================================================ */
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/80,
+html.dark .bg-slate-50\/60 {
+  background-color: #0f172a !important;
+  color: #f8fafc;
+}
+
+html.dark .bg-white,
+html.dark .bg-white\/95,
+html.dark .bg-white\/90,
+html.dark .bg-white\/80 {
+  background-color: #1e293b !important;
+  color: #f8fafc;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-slate-100\/80 {
+  background-color: #0f172a !important;
+  color: #e2e8f0;
+}
+
+html.dark .bg-slate-200 {
+  background-color: #334155 !important;
+  color: #f8fafc;
+}
+
+/* Borders in Dark Mode */
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155 !important;
+}
+
+/* High-Contrast Typography in Dark Mode */
+html.dark .text-slate-900,
+html.dark .text-slate-950 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-800 {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+/* Soft Accent Surfaces & Normative / Mental Load Badges in Dark Mode */
+html.dark .bg-teal-50,
+html.dark .bg-teal-50\/60,
+html.dark .bg-teal-50\/50,
+html.dark .bg-teal-100 {
+  background-color: rgba(13, 148, 136, 0.18) !important;
+}
+
+html.dark .border-teal-200,
+html.dark .border-teal-300 {
+  border-color: rgba(45, 212, 191, 0.35) !important;
+}
+
+html.dark .text-teal-700,
+html.dark .text-teal-800,
+html.dark .text-teal-900 {
+  color: #5eead4 !important;
+}
+
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-50\/50,
+html.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.18) !important;
+}
+
+html.dark .border-emerald-200,
+html.dark .border-emerald-300 {
+  border-color: rgba(52, 211, 153, 0.35) !important;
+}
+
+html.dark .text-emerald-700,
+html.dark .text-emerald-800,
+html.dark .text-emerald-900 {
+  color: #6ee7b7 !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/60,
+html.dark .bg-amber-50\/50,
+html.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+}
+
+html.dark .border-amber-200,
+html.dark .border-amber-300 {
+  border-color: rgba(251, 191, 36, 0.38) !important;
+}
+
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900 {
+  color: #fcd34d !important;
+}
+
+html.dark .bg-rose-50,
+html.dark .bg-rose-50\/90,
+html.dark .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.18) !important;
+}
+
+html.dark .border-rose-200,
+html.dark .border-rose-300 {
+  border-color: rgba(251, 113, 133, 0.4) !important;
+}
+
+html.dark .text-rose-700,
+html.dark .text-rose-800,
+html.dark .text-rose-900,
+html.dark .text-rose-950 {
+  color: #fda4af !important;
+}
+
+html.dark .bg-blue-50,
+html.dark .bg-blue-100,
+html.dark .bg-cyan-50,
+html.dark .bg-indigo-50 {
+  background-color: rgba(14, 165, 233, 0.18) !important;
+}
+
+html.dark .border-blue-200,
+html.dark .border-cyan-200,
+html.dark .border-indigo-200 {
+  border-color: rgba(56, 189, 248, 0.35) !important;
+}
+
+html.dark .text-blue-700,
+html.dark .text-blue-800,
+html.dark .text-cyan-700,
+html.dark .text-cyan-800,
+html.dark .text-indigo-700,
+html.dark .text-indigo-900 {
+  color: #7dd3fc !important;
+}
+
+html.dark .bg-purple-50,
+html.dark .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+
+html.dark .border-purple-200 {
+  border-color: rgba(192, 132, 252, 0.35) !important;
+}
+
+html.dark .text-purple-700,
+html.dark .text-purple-800 {
+  color: #d8b4fe !important;
+}
+
+/* Form controls in Dark Mode */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
 }
