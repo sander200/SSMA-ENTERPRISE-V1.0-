@@ -1,14 +1,37 @@
 import { useState } from "react";
-import { Smile, AlertCircle, ShieldAlert, Sparkles, CheckCircle2, HeartHandshake, ArrowRight } from "lucide-react";
+import {
+  Smile,
+  AlertCircle,
+  ShieldAlert,
+  Sparkles,
+  CheckCircle2,
+  HeartHandshake,
+  ArrowRight,
+  Bell,
+  Clock,
+  Send,
+} from "lucide-react";
 import { PsychologicalLog } from "../types";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface Props {
   onCheckInCompleted: (log: PsychologicalLog) => void;
   currentSector: string;
   currentSectorId: number;
+  reminderConfig?: { enabled: boolean; time: string };
+  onOpenReminderSettings?: () => void;
+  onSendTestNotification?: () => void;
 }
 
-export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId }: Props) {
+export function CheckInView({
+  onCheckInCompleted,
+  currentSector,
+  currentSectorId,
+  reminderConfig,
+  onOpenReminderSettings,
+  onSendTestNotification,
+}: Props) {
+  const { language } = useLanguage();
   const [shiftStage, setShiftStage] = useState<"START" | "END">("START");
   const [anxietyScore, setAnxietyScore] = useState<number>(3);
   const [fatigueScore, setFatigueScore] = useState<number>(3);
@@ -18,7 +41,6 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
 
   const totalMentalLoad = anxietyScore + fatigueScore;
   const isHighLoad = totalMentalLoad >= 7;
-  const isLowLoad = totalMentalLoad <= 4;
 
   const anxietyLabels = [
     "Calmo e Tranquilo",
@@ -80,20 +102,64 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
 
   return (
     <div className="max-w-3xl mx-auto w-full space-y-6">
+      {/* Reminder Pill Notification Banner */}
+      {reminderConfig && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-800/90 border border-amber-500/30 shadow-md">
+          <div className="flex items-center gap-2.5 text-xs text-slate-300">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-white block">
+                {reminderConfig.enabled
+                  ? `Lembrete Diário Ativo: ${reminderConfig.time}h`
+                  : "Lembrete Diário Desativado"}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Notificação automática via Web Notification API
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            {onSendTestNotification && (
+              <button
+                type="button"
+                onClick={onSendTestNotification}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-750 text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1"
+                title="Testar disparo de notificação"
+              >
+                <Send className="w-3 h-3 text-amber-400" />
+                <span>Testar</span>
+              </button>
+            )}
+            {onOpenReminderSettings && (
+              <button
+                type="button"
+                onClick={onOpenReminderSettings}
+                className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition-colors cursor-pointer"
+              >
+                Alterar Horário
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Intro Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-slate-800/90 border border-slate-700/70 rounded-3xl p-6 shadow-xl relative overflow-hidden backdrop-blur-md">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-teal-500/15 border border-teal-500/30 text-teal-400 flex items-center justify-center shrink-0 shadow-inner">
             <HeartHandshake className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                SanderVerse • Saúde Mental
+                SST • Carga Mental & Bem-estar
               </span>
-              <span className="text-xs text-slate-400">Escala de Bem-Estar Psicológico</span>
+              <span className="text-xs text-slate-300">Escala de Bem-Estar Psicológico</span>
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">
               Check-in Emocional Diário do Trabalhador
@@ -107,20 +173,20 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
       </div>
 
       {lastSubmittedLog ? (
-        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-6 text-slate-100 space-y-4 shadow-xl animate-fadeIn">
+        <div className="bg-slate-800/90 border border-emerald-500/30 rounded-3xl p-6 text-slate-100 space-y-4 shadow-xl animate-fadeIn">
           <div className="flex items-center gap-3 text-emerald-400">
             <CheckCircle2 className="w-6 h-6" />
             <h3 className="text-lg font-bold text-white">Check-in Registrado com Proteção LGPD</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/60">
+            <div className="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/60">
               <span className="text-xs text-slate-400 block">Identificador Anonimizado</span>
-              <span className="font-mono text-sm font-semibold text-teal-300">
+              <span className="font-mono text-sm font-semibold text-teal-300 truncate block">
                 {lastSubmittedLog.workerHash || "hash-sha256-ok"}
               </span>
             </div>
-            <div className="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/60">
+            <div className="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/60">
               <span className="text-xs text-slate-400 block">Carga Mental Apurada</span>
               <span className="text-sm font-bold text-white">
                 {lastSubmittedLog.totalMentalLoad}/10{" "}
@@ -141,7 +207,7 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
                 </span>
               </span>
             </div>
-            <div className="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/60">
+            <div className="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/60">
               <span className="text-xs text-slate-400 block">Etapa do Turno</span>
               <span className="text-sm font-semibold text-slate-200">
                 {lastSubmittedLog.shiftStage === "START" ? "Início de Turno" : "Encerramento de Turno"}
@@ -150,7 +216,7 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
           </div>
 
           {lastSubmittedLog.totalMentalLoad >= 7 && (
-            <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-200 flex items-start gap-3">
+            <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-200 flex items-start gap-3">
               <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
               <div>
                 <strong>Atenção Preventiva:</strong> Sua carga mental combinada está em{" "}
@@ -165,7 +231,7 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
             <button
               type="button"
               onClick={() => setLastSubmittedLog(null)}
-              className="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-750 border border-slate-700 cursor-pointer"
             >
               Fazer Novo Check-in
             </button>
@@ -174,7 +240,7 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl"
+          className="bg-slate-800/90 border border-slate-700/70 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl"
         >
           {/* Shift Stage Selector */}
           <div>
@@ -186,10 +252,10 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
                 type="button"
                 id="shift-stage-start"
                 onClick={() => setShiftStage("START")}
-                className={`p-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                className={`p-3 rounded-2xl border text-sm font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   shiftStage === "START"
                     ? "bg-teal-600/20 border-teal-500 text-teal-300"
-                    : "bg-slate-800/60 border-slate-700 text-slate-400 hover:bg-slate-800"
+                    : "bg-slate-900/60 border-slate-750 text-slate-400 hover:bg-slate-800"
                 }`}
               >
                 <Sparkles className="w-4 h-4" />
@@ -199,144 +265,97 @@ export function CheckInView({ onCheckInCompleted, currentSector, currentSectorId
                 type="button"
                 id="shift-stage-end"
                 onClick={() => setShiftStage("END")}
-                className={`p-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                className={`p-3 rounded-2xl border text-sm font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   shiftStage === "END"
                     ? "bg-teal-600/20 border-teal-500 text-teal-300"
-                    : "bg-slate-800/60 border-slate-700 text-slate-400 hover:bg-slate-800"
+                    : "bg-slate-900/60 border-slate-750 text-slate-400 hover:bg-slate-800"
                 }`}
               >
-                <CheckCircle2 className="w-4 h-4" />
-                Encerramento de Turno (Desmobilização)
+                <Sparkles className="w-4 h-4" />
+                Fim de Turno (Fechamento)
               </button>
             </div>
           </div>
 
-          {/* Slider 1: Anxiety */}
-          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-3">
+          {/* Anxiety Scale */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="anxiety-range" className="text-sm font-bold text-slate-200">
-                1. Nível de Ansiedade / Tensão Emocional
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                Nível de Tensão / Ansiedade (1 a 5)
               </label>
-              <span className="text-sm font-extrabold text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-lg border border-teal-500/20">
-                {anxietyScore} de 5
+              <span className="text-xs font-bold text-teal-400">
+                {anxietyScore} - {anxietyLabels[anxietyScore - 1]}
               </span>
             </div>
-
             <input
-              id="anxiety-range"
               type="range"
-              min="1"
-              max="5"
-              step="1"
+              min={1}
+              max={5}
               value={anxietyScore}
               onChange={(e) => setAnxietyScore(Number(e.target.value))}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-400"
+              className="w-full accent-teal-500 bg-slate-900 h-2 rounded-lg cursor-pointer"
             />
-
-            <div className="flex justify-between items-center text-xs text-slate-400">
-              <span className="text-emerald-400 font-medium">1 - Serenidade</span>
-              <span className="text-center font-medium text-slate-300">
-                {anxietyLabels[anxietyScore - 1]}
-              </span>
-              <span className="text-rose-400 font-medium">5 - Alta Tensão</span>
+            <div className="flex justify-between text-[11px] text-slate-400 px-1">
+              <span>1 - Calmo</span>
+              <span>3 - Moderado</span>
+              <span>5 - Crítico</span>
             </div>
           </div>
 
-          {/* Slider 2: Fatigue */}
-          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-3">
+          {/* Fatigue Scale */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="fatigue-range" className="text-sm font-bold text-slate-200">
-                2. Nível de Fadiga Cognitiva / Cansaço
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                Nível de Fadiga Física / Cognitiva (1 a 5)
               </label>
-              <span className="text-sm font-extrabold text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-lg border border-teal-500/20">
-                {fatigueScore} de 5
+              <span className="text-xs font-bold text-amber-400">
+                {fatigueScore} - {fatigueLabels[fatigueScore - 1]}
               </span>
             </div>
-
             <input
-              id="fatigue-range"
               type="range"
-              min="1"
-              max="5"
-              step="1"
+              min={1}
+              max={5}
               value={fatigueScore}
               onChange={(e) => setFatigueScore(Number(e.target.value))}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-400"
+              className="w-full accent-amber-500 bg-slate-900 h-2 rounded-lg cursor-pointer"
             />
-
-            <div className="flex justify-between items-center text-xs text-slate-400">
-              <span className="text-emerald-400 font-medium">1 - Disposição Plena</span>
-              <span className="text-center font-medium text-slate-300">
-                {fatigueLabels[fatigueScore - 1]}
-              </span>
-              <span className="text-rose-400 font-medium">5 - Exaustão Mental</span>
+            <div className="flex justify-between text-[11px] text-slate-400 px-1">
+              <span>1 - Revigorado</span>
+              <span>3 - Cansaço Normal</span>
+              <span>5 - Esgotado</span>
             </div>
           </div>
 
-          {/* Slider 3: Focus */}
-          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-3">
-            <div className="flex items-center justify-between">
-              <label htmlFor="focus-range" className="text-sm font-bold text-slate-200">
-                3. Clareza Mental e Percepção de Foco
-              </label>
-              <span className="text-sm font-extrabold text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-lg border border-teal-500/20">
-                {focusScore} de 5
+          {/* Calculated Mental Load Pill */}
+          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700/80 flex items-center justify-between">
+            <div>
+              <span className="text-xs text-slate-400 block">Carga Mental Combinada Calculada:</span>
+              <span className="text-xl font-extrabold text-white">
+                {totalMentalLoad} / 10
               </span>
             </div>
-
-            <input
-              id="focus-range"
-              type="range"
-              min="1"
-              max="5"
-              step="1"
-              value={focusScore}
-              onChange={(e) => setFocusScore(Number(e.target.value))}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-400"
-            />
-
-            <div className="flex justify-between items-center text-xs text-slate-400">
-              <span className="text-amber-400 font-medium">1 - Disperso</span>
-              <span className="text-emerald-400 font-medium">5 - Foco Operacional Total</span>
-            </div>
-          </div>
-
-          {/* Dynamic Impact Preview */}
-          <div
-            className={`p-4 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-              isHighLoad
-                ? "bg-rose-500/10 border-rose-500/30 text-rose-200"
-                : isLowLoad
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200"
-                : "bg-blue-500/10 border-blue-500/30 text-blue-200"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>
-                <strong>Carga Mental Prevista ({totalMentalLoad}/10):</strong>{" "}
-                {isHighLoad
-                  ? "Tempo ampliado (+50% = 45s) com sugestão de descompressão ativa."
-                  : isLowLoad
-                  ? "Tempo reduzido (-20% = 24s) no modo time-attack competitivo."
-                  : "Tempo padrão de avaliação (30 segundos por cenário)."}
-              </span>
-            </div>
-          </div>
-
-          {/* Submit */}
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              id="submit-checkin-button"
-              disabled={submitting}
-              className="px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm shadow-lg shadow-teal-900/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                isHighLoad
+                  ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                  : totalMentalLoad <= 4
+                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                  : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+              }`}
             >
-              <CheckCircle2 className="w-4 h-4" />
-              {submitting ? "Processando e Encriptando..." : "Registrar Check-in e Iniciar Sessão"}
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              {isHighLoad ? "Carga Elevada (Alerta)" : totalMentalLoad <= 4 ? "Carga Baixa (Ótima)" : "Carga Moderada (Estável)"}
+            </span>
           </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white text-sm font-bold transition-all shadow-lg shadow-teal-950/40 cursor-pointer flex items-center justify-center gap-2"
+          >
+            {submitting ? "Criptografando e Salvando..." : "Registrar Check-in Emocional"}
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </form>
       )}
     </div>

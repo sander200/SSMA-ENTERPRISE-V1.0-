@@ -66,3 +66,24 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Handle Web Notification Clicks - Focus or Open Window
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          // If already open, focus it and post a message to open check-in tab
+          client.postMessage({ type: 'NAVIGATE_TO_TAB', tab: 'checkin' });
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});

@@ -70,3 +70,17 @@ export interface SectorAggregatedStats {
     shiftStage: string;
   }>;
 }
+
+export interface UserBadge {
+  id: string;
+  titleKey: string;
+  defaultTitle: string;
+  tagline: string;
+  description: string;
+  requiredScenarios: number;
+  tier: number;
+  iconName: "award" | "eye" | "file-check" | "zap" | "crown";
+  colorClass: string;
+  bgGlowClass: string;
+  borderClass: string;
+}

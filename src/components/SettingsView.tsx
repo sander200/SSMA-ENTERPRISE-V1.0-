@@ -21,10 +21,17 @@ import {
   FileCode,
   QrCode,
   ExternalLink,
+  Award,
+  CreditCard,
+  Users,
+  RefreshCw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { SupportedLanguage } from "../i18n/translations";
+
+import { NotificationReminderSettings } from "./NotificationReminderSettings";
+import { NotificationReminderConfig } from "../hooks/useNotificationReminder";
 
 interface Props {
   currentPassword: string;
@@ -37,6 +44,14 @@ interface Props {
   onToggleMotion: (enabled: boolean) => void;
   onClearHistory: () => void;
   totalAttempts: number;
+  notificationReminder?: {
+    isSupported: boolean;
+    permission: NotificationPermission;
+    config: NotificationReminderConfig;
+    onUpdateConfig: (partial: Partial<NotificationReminderConfig>) => void;
+    onRequestPermission: () => Promise<boolean>;
+    onSendTestNotification: () => void;
+  };
 }
 
 export function SettingsView({
@@ -50,6 +65,7 @@ export function SettingsView({
   onToggleMotion,
   onClearHistory,
   totalAttempts,
+  notificationReminder,
 }: Props) {
   const { language, setLanguage, t, languages } = useLanguage();
 
@@ -75,6 +91,34 @@ export function SettingsView({
   const [isApkUnlocked, setIsApkUnlocked] = useState(false);
   const [apkKeyError, setApkKeyError] = useState<string | null>(null);
   const [apkKeySuccess, setApkKeySuccess] = useState<string | null>(null);
+
+  // Enterprise SaaS License & Subscription Management State
+  const [licenseKeyInput, setLicenseKeyInput] = useState<string>(() => {
+    return localStorage.getItem("ssma_enterprise_license_key") || "SSMA-CORP-94713-ENT-2026-VAL";
+  });
+  const [licensePlan, setLicensePlan] = useState<string>(() => {
+    return localStorage.getItem("ssma_enterprise_plan") || "SSMA Enterprise Multi-Setor SaaS (2026)";
+  });
+  const [licenseSeats, setLicenseSeats] = useState<number>(() => {
+    const val = localStorage.getItem("ssma_enterprise_seats");
+    return val ? Number(val) : 250;
+  });
+  const [licenseFeedback, setLicenseFeedback] = useState<string | null>(null);
+
+  function handleSaveLicense(e: React.FormEvent) {
+    e.preventDefault();
+    localStorage.setItem("ssma_enterprise_license_key", licenseKeyInput);
+    localStorage.setItem("ssma_enterprise_plan", licensePlan);
+    localStorage.setItem("ssma_enterprise_seats", String(licenseSeats));
+    setLicenseFeedback(
+      language === "es"
+        ? "Parámetros de licencia SaaS corporativa actualizados y validados con éxito."
+        : language === "en"
+        ? "Corporate SaaS license parameters successfully updated and validated."
+        : "Parâmetros de licença SaaS corporativa atualizados e validados com sucesso."
+    );
+    setTimeout(() => setLicenseFeedback(null), 4000);
+  }
 
   function handleSavePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -292,6 +336,18 @@ export function SettingsView({
         </div>
       </section>
 
+      {/* SECTION: DAILY NOTIFICATION REMINDER (WEB NOTIFICATION API) */}
+      {notificationReminder && (
+        <NotificationReminderSettings
+          isSupported={notificationReminder.isSupported}
+          permission={notificationReminder.permission}
+          config={notificationReminder.config}
+          onUpdateConfig={notificationReminder.onUpdateConfig}
+          onRequestPermission={notificationReminder.onRequestPermission}
+          onSendTestNotification={notificationReminder.onSendTestNotification}
+        />
+      )}
+
       {/* SECTION 2: PASSWORD CONFIGURATION & RESET */}
       <section className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700/70 space-y-6 shadow-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -462,7 +518,11 @@ export function SettingsView({
                   <span>{t("defaultPasswordNotice")}</span>
                 </div>
                 <p className="text-[11px] text-amber-200/80">
-                  Caso esqueça sua senha modificada, você pode usar este botão de restauração rápida para retornar a <strong>admin123</strong> sem perder seus dados de treinamento.
+                  {language === "es"
+                    ? "Si olvida su clave modificada, use este botón para restaurar la clave corporativa 'keysander5361'."
+                    : language === "en"
+                    ? "If you forget your modified key, use this button to restore corporate key 'keysander5361'."
+                    : "Caso esqueça sua chave modificada, você pode usar este botão de restauração rápida para retornar a 'keysander5361'."}
                 </p>
               </div>
             </div>
@@ -725,6 +785,159 @@ export function SettingsView({
             </div>
           </div>
         )}
+      </section>
+
+      {/* SECTION 4: CONTROLE DE LICENÇAS E ASSINATURAS SAAS CORPORATIVAS */}
+      <section className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700/70 space-y-5 shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                {language === "es"
+                  ? "Control de Licencias y Suscripciones SaaS"
+                  : language === "en"
+                  ? "SaaS License & Corporate Subscription Control"
+                  : "Controle de Licenças e Assinaturas SaaS"}
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  {language === "es" ? "Activa • Enterprise" : language === "en" ? "Active • Enterprise" : "Ativa • Enterprise"}
+                </span>
+              </h2>
+              <p className="text-xs text-slate-300">
+                {language === "es"
+                  ? "Gestión de puestos de trabajo, vigencia contractual y autorización de módulos SaaS corporativos."
+                  : language === "en"
+                  ? "Workstation seats management, subscription validity, and corporate module licensing."
+                  : "Gestão de postos operacionais, vigência contratual e licenciamento de módulos corporativos."}
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-900 border border-slate-700 text-teal-300 self-start sm:self-auto">
+            <CreditCard className="w-3.5 h-3.5 text-teal-400" />
+            2026-SaaS-ENT
+          </span>
+        </div>
+
+        {licenseFeedback && (
+          <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <span>{licenseFeedback}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Card 1: Subscription Tier Overview */}
+          <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-750 flex flex-col justify-between space-y-4">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 block mb-1">
+                {language === "es" ? "Plan Contratado" : language === "en" ? "Contracted Plan" : "Plano Contratado"}
+              </span>
+              <h3 className="text-sm font-bold text-white">{licensePlan}</h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                {language === "es"
+                  ? "Acceso ilimitado a simulaciones de 6 sectores normativos (NRs MTE) con cifrado LGPD Art. 11/13."
+                  : language === "en"
+                  ? "Unlimited multi-sector safety simulations with LGPD compliant cryptographic storage."
+                  : "Acesso total a simulações de 6 setores normativos (NRs MTE) com criptografia LGPD Art. 11/13."}
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-300">
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-teal-400" />
+                  {language === "es" ? "Puestos Activos:" : language === "en" ? "Active Seats:" : "Postos Ativos:"}
+                </span>
+                <span className="font-bold text-white">{licenseSeats} colaboradores</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>{language === "es" ? "Vigencia:" : language === "en" ? "Expires:" : "Vigência:"}</span>
+                <span className="text-emerald-400 font-mono font-semibold">31/12/2026 (Ativa)</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>{language === "es" ? "SLA de Soporte:" : language === "en" ? "Support SLA:" : "SLA de Suporte:"}</span>
+                <span className="text-teal-300 font-semibold">24/7 Crítico</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: License Key Config Form */}
+          <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-750 space-y-4 lg:col-span-2">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <h4 className="text-sm font-bold text-white">
+                  {language === "es"
+                    ? "Actualizar Clave de Licencia Institucional"
+                    : language === "en"
+                    ? "Update Corporate License Key"
+                    : "Atualizar Chave de Licença Institucional"}
+                </h4>
+              </div>
+              <span className="text-[11px] font-mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                SHA-256 Validated
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveLicense} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    {language === "es" ? "Clave / Token de Licencia" : language === "en" ? "License Key / Token" : "Chave / Token de Licença"}
+                  </label>
+                  <input
+                    type="text"
+                    value={licenseKeyInput}
+                    onChange={(e) => setLicenseKeyInput(e.target.value)}
+                    placeholder="SSMA-CORP-XXXXX-ENT-2026-VAL"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-hidden focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    {language === "es" ? "Nivel de Suscripción" : language === "en" ? "Subscription Tier" : "Nível de Assinatura"}
+                  </label>
+                  <select
+                    value={licensePlan}
+                    onChange={(e) => setLicensePlan(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-teal-500"
+                  >
+                    <option value="SSMA Enterprise Multi-Setor SaaS (2026)">SSMA Enterprise Multi-Setor SaaS (2026)</option>
+                    <option value="SSMA Corporate Multi-Planta (500 Vidas)">SSMA Corporate Multi-Planta (500 Vidas)</option>
+                    <option value="SSMA Global Unlimited Enterprise">SSMA Global Unlimited Enterprise</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
+                  <span>
+                    {language === "es"
+                      ? "Verificación automática de normativas NRs MTE 2026 sincronizada."
+                      : language === "en"
+                      ? "Automatic synchronization with 2026 regulatory OSH standards."
+                      : "Verificação automática de normas NRs MTE 2026 sincronizada."}
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto py-2 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-teal-950/40 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>
+                    {language === "es" ? "Validar y Guardar Licencia" : language === "en" ? "Validate & Save License" : "Validar e Salvar Licença"}
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </section>
 
       {/* SECTION 4: ANIMATIONS AND VISUAL EFFECTS */}

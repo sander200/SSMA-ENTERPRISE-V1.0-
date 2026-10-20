@@ -175,16 +175,14 @@ Assinado digitalmente por chave criptográfica institucional.
 ================================================================================`;
   }
 
-  function handleSendViaGmail() {
-    handleSaveCompanyInfo();
+  function getGmailUrl(): string {
     const subject = `[SSMA Enterprise] Relatório Executivo Criptografado de SST - ${
       companyName || "Empresa"
     }`;
     const body = generateFormattedReportText();
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+    return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
       recipientEmail
     )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, "_blank", "noopener,noreferrer");
   }
 
   function handleSendViaMailto() {
@@ -358,10 +356,12 @@ Assinado digitalmente por chave criptográfica institucional.
 
         {/* Action Buttons: Gmail, Mailto, Copy & Preview */}
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          <button
-            type="button"
+          <a
             id="send-gmail-btn"
-            onClick={handleSendViaGmail}
+            href={getGmailUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleSaveCompanyInfo}
             className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-teal-950/40 cursor-pointer flex items-center justify-center gap-2"
           >
             <Mail className="w-4 h-4" />
@@ -373,7 +373,7 @@ Assinado digitalmente por chave criptográfica institucional.
                 : "Enviar Relatório por Gmail"}
             </span>
             <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-          </button>
+          </a>
 
           <button
             type="button"

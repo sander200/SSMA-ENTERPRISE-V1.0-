@@ -12,10 +12,14 @@ import { LGPDConsentModal } from "./components/LGPDConsentModal";
 import { PasswordPromptModal } from "./components/PasswordPromptModal";
 import { SettingsView } from "./components/SettingsView";
 import { ECONOMIC_SECTORS, INITIAL_SCENARIOS } from "./data/sectors";
-import { TestScenario, PsychologicalLog, TrainingAttempt } from "./types";
+import { USER_BADGES } from "./data/badges";
+import { TestScenario, PsychologicalLog, TrainingAttempt, UserBadge } from "./types";
 import { Trophy, CheckCircle, Flame, Shield, ArrowUpRight, ArrowLeft } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext";
 import { motion, AnimatePresence } from "motion/react";
+import { useNotificationReminder } from "./hooks/useNotificationReminder";
+import { NotificationReminderToast } from "./components/NotificationReminderToast";
+import { BadgeUnlockModal } from "./components/BadgeUnlockModal";
 
 function AppContent() {
   const { t, language } = useLanguage();
@@ -33,9 +37,14 @@ function AppContent() {
   const [isGeneratingAI, setIsGeneratingAI] = useState<boolean>(false);
   const [showLGPDModal, setShowLGPDModal] = useState<boolean>(false);
 
-  // Settings & Password State
+  // Settings & Password State (Strict Master Key: keysander5361)
   const [settingsPassword, setSettingsPassword] = useState<string>(() => {
-    return localStorage.getItem("ssma_settings_password") || "admin123";
+    const saved = localStorage.getItem("ssma_settings_password");
+    if (!saved || saved === "admin123") {
+      localStorage.setItem("ssma_settings_password", "keysander5361");
+      return "keysander5361";
+    }
+    return saved;
   });
   const [isPasswordRequired, setIsPasswordRequired] = useState<boolean>(() => {
     return localStorage.getItem("ssma_settings_password_required") !== "false";
@@ -46,6 +55,14 @@ function AppContent() {
   // Dynamic Tab Transitions / Motion State
   const [motionEnabled, setMotionEnabled] = useState<boolean>(() => {
     return localStorage.getItem("ssma_motion_enabled") !== "false";
+  });
+
+  // Badge Unlock Celebration State
+  const [unlockedBadgeCelebration, setUnlockedBadgeCelebration] = useState<UserBadge | null>(null);
+
+  // Web Notification Daily Reminder Hook
+  const reminder = useNotificationReminder({
+    onNavigateToCheckIn: () => setActiveTab("checkin"),
   });
 
   // User Psychological Profile State - Zero mock start for live enterprise recording
@@ -153,6 +170,15 @@ function AppContent() {
     setAttempts((prev) => {
       const updated = [attempt, ...prev];
       localStorage.setItem("ssma_training_attempts", JSON.stringify(updated.slice(0, 50)));
+
+      // Detect if user unlocked a new tier milestone (1, 3, 5, 10, 20)
+      const newlyUnlocked = USER_BADGES.find(
+        (b) => b.requiredScenarios === updated.length
+      );
+      if (newlyUnlocked) {
+        setUnlockedBadgeCelebration(newlyUnlocked);
+      }
+
       return updated;
     });
   }
@@ -187,8 +213,8 @@ function AppContent() {
   }
 
   function handleResetPasswordToDefault() {
-    setSettingsPassword("admin123");
-    localStorage.setItem("ssma_settings_password", "admin123");
+    setSettingsPassword("keysander5361");
+    localStorage.setItem("ssma_settings_password", "keysander5361");
   }
 
   function handleTogglePasswordRequired(required: boolean) {
@@ -246,6 +272,16 @@ function AppContent() {
         onResetToDefault={handleResetPasswordToDefault}
       />
 
+      {/* Badge Unlock Celebration Modal */}
+      <BadgeUnlockModal
+        badge={unlockedBadgeCelebration}
+        onClose={() => setUnlockedBadgeCelebration(null)}
+        onViewAllBadges={() => {
+          setUnlockedBadgeCelebration(null);
+          setActiveTab("menu");
+        }}
+      />
+
       {/* Main Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -258,6 +294,13 @@ function AppContent() {
         isSettingsUnlocked={isSettingsUnlocked}
         onSelectSettingsTab={handleSelectSettingsTab}
         motionEnabled={motionEnabled}
+      />
+
+      {/* Web Notification In-App Toast Banner */}
+      <NotificationReminderToast
+        alert={reminder.inAppAlert}
+        onDismiss={reminder.dismissInAppAlert}
+        onNavigateToCheckIn={() => setActiveTab("checkin")}
       />
 
       {/* Content Area with Dynamic Animated Transitions */}
@@ -412,6 +455,9 @@ function AppContent() {
                 onCheckInCompleted={handleCheckInCompleted}
                 currentSector={activeSector.name}
                 currentSectorId={activeSector.id}
+                reminderConfig={reminder.config}
+                onOpenReminderSettings={() => setActiveTab("settings")}
+                onSendTestNotification={reminder.sendTestNotification}
               />
             </motion.div>
           )}
@@ -538,6 +584,7 @@ function AppContent() {
                 onToggleMotion={handleToggleMotion}
                 onClearHistory={handleClearHistory}
                 totalAttempts={totalAttempts}
+                notificationReminder={reminder}
               />
             </motion.div>
           )}
