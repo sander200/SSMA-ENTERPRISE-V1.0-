@@ -1,5 +1,10 @@
 import { SectorInfo, TestScenario } from "../types";
 
+/**
+ * riskClass não é o grau da NR-4.
+ * O grau do estabelecimento sai do anexo da NR-4, pelo CNAE da atividade
+ * principal e, se for diferente, da preponderante. O nome deste setor não o define.
+ */
 export const ECONOMIC_SECTORS: SectorInfo[] = [
   {
     id: 1,
@@ -10,7 +15,7 @@ export const ECONOMIC_SECTORS: SectorInfo[] = [
     focusDescription:
       "Trabalho em altura, montagem de andaimes, proteções coletivas (EPCs) e seleção/uso correto de EPIs.",
     iconName: "HardHat",
-    riskClass: "Grau 4",
+    riskClass: "Pelo CNAE",
     primaryColor: "amber",
   },
   {
@@ -22,7 +27,7 @@ export const ECONOMIC_SECTORS: SectorInfo[] = [
     focusDescription:
       "Segurança em máquinas e equipamentos, procedimentos de bloqueio e etiquetagem (LOTO) e riscos elétricos.",
     iconName: "Cpu",
-    riskClass: "Grau 3",
+    riskClass: "Pelo CNAE",
     primaryColor: "blue",
   },
   {
@@ -34,7 +39,7 @@ export const ECONOMIC_SECTORS: SectorInfo[] = [
     focusDescription:
       "Biossegurança hospitalar, descarte seguro de perfurocortantes e contenção de exposição a agentes biológicos.",
     iconName: "HeartPulse",
-    riskClass: "Grau 3",
+    riskClass: "Pelo CNAE",
     primaryColor: "emerald",
   },
   {
@@ -46,7 +51,7 @@ export const ECONOMIC_SECTORS: SectorInfo[] = [
     focusDescription:
       "Monitoramento atmosférico rigoroso, ventilação de recintos, PET e protocolos de resgate de emergência.",
     iconName: "Pickaxe",
-    riskClass: "Grau 4",
+    riskClass: "Pelo CNAE",
     primaryColor: "slate",
   },
   {
@@ -58,7 +63,7 @@ export const ECONOMIC_SECTORS: SectorInfo[] = [
     focusDescription:
       "Manejo seguro de defensivos agrícolas, operação de maquinário pesado e prevenção contra insolação térmica.",
     iconName: "Tractor",
-    riskClass: "Grau 3",
+    riskClass: "Pelo CNAE",
     primaryColor: "lime",
   },
   {
@@ -70,7 +75,7 @@ export const ECONOMIC_SECTORS: SectorInfo[] = [
     focusDescription:
       "Ergonomia aplicada, mitigação de estresse corporativo, controle de carga mental e gestão saudável de prazos.",
     iconName: "Building2",
-    riskClass: "Grau 2",
+    riskClass: "Pelo CNAE",
     primaryColor: "violet",
   },
 ];

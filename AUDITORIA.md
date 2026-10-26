@@ -24,4 +24,4 @@ CLT, Capítulo V (arts. 154 a 201, com os deveres dos arts. 157 e 158). NR-1 (GR
 
 ## O que ainda não é conformidade
 
-Os cenários iniciais ainda trazem justificativas didáticas, algumas com número de item ou limite que precisam ser conferidos na NR vigente antes de uso comercial. O grau de risco mostrado por setor é ilustrativo: o grau da NR-4 depende do CNAE, não do nome genérico do setor. Há chave de acesso padrão no código-fonte; isso é falha de segurança e não tem relação com a LGPD nem com as NRs.
+Os cenários iniciais ainda trazem justificativas didáticas, algumas com número de item ou limite que precisam ser conferidos na NR vigente antes de uso comercial. O cartão do setor deixou de mostrar Grau 2, 3 ou 4. O rótulo agora é “Pelo CNAE”: o grau da NR-4 sai do anexo, pela atividade principal do CNPJ e, se for diferente, pela preponderante. O aplicativo não calcula esse grau nem a equipe do SESMT. Esse número não é a classificação do perigo no PGR. Há chave de acesso padrão no código-fonte; isso é falha de segurança e não tem relação com a LGPD nem com as NRs.

@@ -6,7 +6,7 @@ export interface SectorInfo {
   normList: string[];
   focusDescription: string;
   iconName: string;
-  riskClass: "Grau 3" | "Grau 4" | "Grau 2";
+  riskClass: "Pelo CNAE";
   primaryColor: string;
 }
 

@@ -85,7 +85,10 @@ export function SectorGrid({ selectedSectorId, onSelectSector }: Props) {
                   </div>
                 </div>
 
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                <span
+                  title="O grau da NR-4 não é o nome deste setor. Ele sai do anexo, pelo CNAE do estabelecimento."
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700"
+                >
                   {sec.riskClass}
                 </span>
               </div>

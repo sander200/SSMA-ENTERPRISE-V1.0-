@@ -94,17 +94,17 @@ export function AIGeneratorView({ onLoadScenarioToPlay, initialSectorName }: Pro
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                Motor de IA Generativa • Gemini 3.8 Flash
+                Exercício de capacitação
               </span>
-              <span className="text-xs text-slate-400">Zero Alucinação de NRs</span>
+              <span className="text-xs text-slate-400">Não é texto oficial de NR</span>
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">
               Gerador Dinâmico de Cenários de SST
             </h1>
             <p className="text-sm text-slate-300 mt-1 leading-relaxed">
-              Sintetize cenários de risco iminente combinando setor econômico, variáveis climáticas,
-              falhas operacionais e pressões psicológicas, com rigorosa validação jurídica conforme as
-              Normas Regulamentadoras brasileiras.
+              O gerador pede uma situação nova. Se o motor não responder, permanece a cena curada deste setor,
+              e ela se repete porque o banco local tem uma cena por setor. A resposta é a do exercício.
+              Não declara conformidade e não atribui grau da NR-4.
             </p>
           </div>
         </div>
@@ -142,7 +142,7 @@ export function AIGeneratorView({ onLoadScenarioToPlay, initialSectorName }: Pro
             </select>
             {selectedSectorObj && (
               <span className="text-[11px] text-slate-400 block leading-tight">
-                Normas-base: {selectedSectorObj.norms} • {selectedSectorObj.riskClass}
+                Normas de referência do exercício: {selectedSectorObj.norms}. O grau da NR-4 depende do CNAE, não deste setor.
               </span>
             )}
           </div>
