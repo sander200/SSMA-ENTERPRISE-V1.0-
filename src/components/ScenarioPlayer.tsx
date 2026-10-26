@@ -217,7 +217,11 @@ export function ScenarioPlayer({
           </div>
         </div>
 
-        {/* Situation Description */}
+        <p className="text-xs text-slate-400">
+            Exercício de capacitação. Não é inspeção, laudo nem texto oficial da norma. A resposta esperada não libera a atividade.
+          </p>
+
+          {/* Situation Description */}
         <div className="space-y-2">
           <span className="text-xs uppercase tracking-wider font-bold text-slate-400">
             {language === "es" ? "Situación Crítica Observada:" : language === "en" ? "Observed Critical Situation:" : "Situação Crítica Observada:"}
@@ -231,10 +235,10 @@ export function ScenarioPlayer({
         <div className="space-y-3 pt-2">
           <span className="text-xs uppercase tracking-wider font-bold text-slate-400 block">
             {language === "es"
-              ? "Seleccione la Acción Técnica Normativa Correcta:"
+              ? "Seleccione la acción esperada en este ejercicio:"
               : language === "en"
-              ? "Select the Correct Technical Action:"
-              : "Selecione a Ação Técnica Normativa Correta:"}
+              ? "Select the action expected in this exercise:"
+              : "Selecione a ação esperada neste exercício:"}
           </span>
 
           {scenario.options.map((option) => {
@@ -300,10 +304,10 @@ export function ScenarioPlayer({
               <HelpCircle className="w-4 h-4 text-teal-400" />
               <span className="text-xs font-bold uppercase tracking-wider text-teal-300">
                 {language === "es"
-                  ? "Fundamentación Técnica y Jurídica"
+                  ? "Lectura del ejercicio"
                   : language === "en"
-                  ? "Technical and Legal Grounding"
-                  : "Fundamentação Técnica e Jurídica"} ({scenario.norm_reference})
+                  ? "Exercise reading"
+                  : "Leitura do exercício"} ({scenario.norm_reference})
               </span>
             </div>
 
@@ -331,10 +335,10 @@ export function ScenarioPlayer({
               <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-xs leading-relaxed text-slate-300">
                 <strong className="text-emerald-400 block mb-1">
                   {language === "es"
-                    ? `Conducta Correcta Conforme a la Norma (Opción ${correctOption.id}):`
+                    ? `Respuesta esperada en este ejercicio (Opción ${correctOption.id}):`
                     : language === "en"
-                    ? `Correct Action According to Standards (Option ${correctOption.id}):`
-                    : `Conduta Correta Conforme as NRs (Opção ${correctOption.id}):`}
+                    ? `Expected answer in this exercise (Option ${correctOption.id}):`
+                    : `Resposta esperada neste exercício (Opção ${correctOption.id}):`}
                 </strong>
                 {correctOption.justification}
               </div>

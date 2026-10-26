@@ -7,6 +7,7 @@ import {
   BarChart3,
   Wind,
   Settings,
+  ShieldCheck,
   Lock,
   ChevronDown,
   LayoutGrid,
@@ -28,6 +29,7 @@ export type TabType =
   | "decompression"
   | "generator"
   | "sesmt"
+  | "auditoria"
   | "settings";
 
 interface Props {
@@ -79,6 +81,11 @@ export function Navbar({
     { id: "decompression", label: t("tabDecompression"), icon: Wind },
     { id: "generator", label: t("tabGenerator"), icon: Bot },
     { id: "sesmt", label: t("tabSesmt"), icon: BarChart3 },
+    {
+      id: "auditoria",
+      label: language === "es" ? "Límites y norma" : language === "en" ? "Limits and law" : "Limites e norma",
+      icon: ShieldCheck,
+    },
   ];
 
   const currentLangObj =

@@ -9,6 +9,7 @@ import { DecompressionModule } from "./components/DecompressionModule";
 import { AIGeneratorView } from "./components/AIGeneratorView";
 import { SESMTDashboard } from "./components/SESMTDashboard";
 import { LGPDConsentModal } from "./components/LGPDConsentModal";
+import { AuditoriaView } from "./components/AuditoriaView";
 import { PasswordPromptModal } from "./components/PasswordPromptModal";
 import { SettingsView } from "./components/SettingsView";
 import { LicenseExpirationModal } from "./components/LicenseExpirationModal";
@@ -712,6 +713,13 @@ function AppContent() {
                 onLoadScenarioToPlay={handlePlayGeneratedScenario}
                 initialSectorName={activeSector.name}
               />
+            </motion.div>
+          )}
+
+          {/* VIEW: LIMITES DA AUDITORIA */}
+          {activeTab === "auditoria" && (
+            <motion.div key="tab-auditoria-content" {...tabMotionProps}>
+              <AuditoriaView onBack={() => setActiveTab("menu")} />
             </motion.div>
           )}
 
