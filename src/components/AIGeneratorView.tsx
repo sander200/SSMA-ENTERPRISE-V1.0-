@@ -61,7 +61,7 @@ export function AIGeneratorView({ onLoadScenarioToPlay, initialSectorName }: Pro
         setGenerationSource(
           data.source === "curated-library"
             ? "Base Curada NR"
-            : data.source || "Gemini 3.8 Flash"
+            : data.source || "Motor externo"
         );
       } else {
         throw new Error("Formato inválido retornado pelo backend");
