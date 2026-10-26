@@ -159,7 +159,6 @@ export function SettingsView({
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [isConfirmingClearHistory, setIsConfirmingClearHistory] = useState(false);
 
-  // Protected APK Download Master Key State (keysander5361)
   const [apkMasterKeyInput, setApkMasterKeyInput] = useState("");
   const [showApkKey, setShowApkKey] = useState(false);
   const [isApkUnlocked, setIsApkUnlocked] = useState(false);
@@ -679,18 +678,11 @@ export function SettingsView({
     setApkKeyError(null);
     setApkKeySuccess(null);
 
-    if (
-      apkMasterKeyInput.trim() === "keysander5361" ||
-      apkMasterKeyInput.trim() === currentPassword
-    ) {
+    if (currentPassword && apkMasterKeyInput.trim() === currentPassword) {
       setIsApkUnlocked(true);
-      setApkKeySuccess(
-        "¡Clave maestra validada con éxito! Descarga de APK / Instalador Android habilitada."
-      );
+      setApkKeySuccess("Download do instalador liberado neste aparelho.");
     } else {
-      setApkKeyError(
-        "Clave maestra incorrecta. Ingrese 'keysander5361' para desbloquear."
-      );
+      setApkKeyError(t("modalWrongPassword"));
     }
   }
 
@@ -1621,7 +1613,7 @@ export function SettingsView({
             </div>
           </section>
 
-          {/* SECTION B: PROTECTED APK DOWNLOAD (CLAVE MAESTRA: keysander5361) */}
+          {/* SECTION B: PROTECTED APK DOWNLOAD */}
           <section className="bg-white p-6 rounded-3xl border border-slate-200 space-y-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1810,7 +1802,13 @@ export function SettingsView({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onTogglePasswordRequired(!isPasswordRequired)}
+                  onClick={() => {
+                    if (!isPasswordRequired && !currentPassword) {
+                      setPassError(t("defaultPasswordNotice"));
+                      return;
+                    }
+                    onTogglePasswordRequired(!isPasswordRequired);
+                  }}
                   className={`w-12 h-6 rounded-full p-1 transition-colors relative cursor-pointer ${
                     isPasswordRequired ? "bg-teal-600" : "bg-slate-300"
                   }`}

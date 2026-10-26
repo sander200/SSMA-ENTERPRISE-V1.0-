@@ -95,16 +95,20 @@ function AppContent() {
     }
   }, [licenseExpirationDate]);
 
-  // Settings & Password State (Strict Master Key: keysander5361)
   const [settingsPassword, setSettingsPassword] = useState<string>(() => {
+    const userSet = localStorage.getItem("ssma_settings_password_user_set") === "true";
     const saved = localStorage.getItem("ssma_settings_password");
-    if (!saved || saved === "admin123") {
-      localStorage.setItem("ssma_settings_password", "keysander5361");
-      return "keysander5361";
+    if (!userSet || !saved) {
+      localStorage.removeItem("ssma_settings_password");
+      localStorage.setItem("ssma_settings_password_required", "false");
+      return "";
     }
     return saved;
   });
   const [isPasswordRequired, setIsPasswordRequired] = useState<boolean>(() => {
+    const userSet = localStorage.getItem("ssma_settings_password_user_set") === "true";
+    const saved = localStorage.getItem("ssma_settings_password");
+    if (!userSet || !saved) return false;
     return localStorage.getItem("ssma_settings_password_required") !== "false";
   });
   const [isSettingsUnlocked, setIsSettingsUnlocked] = useState<boolean>(false);
@@ -380,11 +384,16 @@ function AppContent() {
   function handleUpdatePassword(newPass: string) {
     setSettingsPassword(newPass);
     localStorage.setItem("ssma_settings_password", newPass);
+    localStorage.setItem("ssma_settings_password_user_set", "true");
   }
 
   function handleResetPasswordToDefault() {
-    setSettingsPassword("keysander5361");
-    localStorage.setItem("ssma_settings_password", "keysander5361");
+    setSettingsPassword("");
+    localStorage.removeItem("ssma_settings_password");
+    localStorage.removeItem("ssma_settings_password_user_set");
+    setIsPasswordRequired(false);
+    localStorage.setItem("ssma_settings_password_required", "false");
+    setIsSettingsUnlocked(true);
   }
 
   function handleTogglePasswordRequired(required: boolean) {

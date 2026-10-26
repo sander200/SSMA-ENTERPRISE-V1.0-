@@ -31,8 +31,7 @@ export function PasswordPromptModal({
     e.preventDefault();
     setErrorMessage(null);
 
-    // Strict master key keysander5361 or configured password
-    if (enteredPassword === currentPassword || enteredPassword.trim() === "keysander5361") {
+    if (currentPassword && enteredPassword === currentPassword) {
       setEnteredPassword("");
       setErrorMessage(null);
       setResetFeedback(null);
@@ -47,7 +46,8 @@ export function PasswordPromptModal({
     setResetFeedback(t("resetSuccessMessage"));
     setErrorMessage(null);
     setIsResetConfirming(false);
-    setEnteredPassword("keysander5361");
+    setEnteredPassword("");
+    onSuccess();
   }
 
   return (
